@@ -14,7 +14,6 @@ struct TowerSlotLabelUnmatched;
 struct TowerSlotLabelBg;
 
 fn randomly_change_text(
-    mut commands: &mut Commands,
     time: Res<Time>,
     mut timer: ResMut<Timer>,
     mut matched_query: Query<&mut Text, With<TowerSlotLabelMatched>>,
@@ -23,7 +22,7 @@ fn randomly_change_text(
     children_query: Query<&Children>,
 ) {
     timer.tick(time.delta_seconds());
-    if (!timer.finished()) {
+    if !timer.finished() {
         return;
     }
 
@@ -102,10 +101,10 @@ fn update_tower_slot_labels(
 }
 
 fn setup(
-    mut commands: &mut Commands,
+    commands: &mut Commands,
     mut font_handles: ResMut<FontHandles>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    mut asset_server: ResMut<AssetServer>,
+    asset_server: ResMut<AssetServer>,
 ) {
     font_handles.jptext = asset_server.load("fonts/NotoSansJP-Light.otf");
 
