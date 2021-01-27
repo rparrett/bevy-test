@@ -56,7 +56,7 @@ fn main() {
     App::build()
         .add_resource(LogSettings {
             level: bevy::log::Level::TRACE,
-            filter: "bevy_webgl2=trace".into(),
+            filter: "wgpu_core=info".into(),
         })
         .add_plugins(DefaultPlugins)
         .init_resource::<State>()
