@@ -14,58 +14,52 @@ enum TargetHighlight {
     Bottom,
 }
 
-#[derive(Default)]
-struct State {
-    cursor_moved_event_reader: EventReader<CursorMoved>,
-    mouse_motion_event_reader: EventReader<MouseMotion>,
-}
+fn startup(mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
-fn startup(commands: &mut Commands, mut materials: ResMut<Assets<ColorMaterial>>) {
-    commands.spawn(Camera2dBundle::default());
-
-    commands.spawn(SpriteBundle {
+    commands.spawn_bundle(SpriteBundle {
         material: materials.add(Color::rgb(0.5, 0.5, 1.0).into()),
         sprite: Sprite::new(Vec2::new(30.0, 30.0)),
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 1.0)),
         ..Default::default()
-    }).with(Cursor);
+    }).insert(Cursor);
 
-    let target_size = Vec2::new(100.0, 10.0);
+    let target_size = Vec2::new(100.0, 100.0);
 
-    commands.spawn(SpriteBundle {
+    commands.spawn_bundle(SpriteBundle {
         material: materials.add(Color::rgb(0.5, 1.0, 0.5).into()),
         sprite: Sprite::new(target_size.clone()),
         ..Default::default()
-    }).with(Target);
+    }).insert(Target);
 
-    commands.spawn(SpriteBundle {
+    commands.spawn_bundle(SpriteBundle {
         material: materials.add(Color::rgb(1.0, 0.5, 0.5).into()),
         sprite: Sprite::new(Vec2::new(target_size.x / 2.0, target_size.y)),
         transform: Transform::from_translation(Vec3::new(target_size.x / -4.0, 0.0, 0.5)),
         visible: Visible { is_visible: false, ..Default::default() },
         ..Default::default()
-    }).with(TargetHighlight::Left);
-    commands.spawn(SpriteBundle {
+    }).insert(TargetHighlight::Left);
+    commands.spawn_bundle(SpriteBundle {
         material: materials.add(Color::rgb(1.0, 0.5, 0.5).into()),
         sprite: Sprite::new(Vec2::new(target_size.x / 2.0, target_size.y)),
         transform: Transform::from_translation(Vec3::new(target_size.x / 4.0, 0.0, 0.5)),
         visible: Visible { is_visible: false, ..Default::default() },
         ..Default::default()
-    }).with(TargetHighlight::Right);
-    commands.spawn(SpriteBundle {
+    }).insert(TargetHighlight::Right);
+    commands.spawn_bundle(SpriteBundle {
         material: materials.add(Color::rgb(1.0, 0.5, 0.5).into()),
         sprite: Sprite::new(Vec2::new(target_size.x, target_size.y / 2.0)),
         transform: Transform::from_translation(Vec3::new(0.0, target_size.y / -4.0, 0.5)),
         visible: Visible { is_visible: false, ..Default::default() },
         ..Default::default()
-    }).with(TargetHighlight::Bottom);
-    commands.spawn(SpriteBundle {
+    }).insert(TargetHighlight::Bottom);
+    commands.spawn_bundle(SpriteBundle {
         material: materials.add(Color::rgb(1.0, 0.5, 0.5).into()),
         sprite: Sprite::new(Vec2::new(target_size.x, target_size.y / 2.0)),
         transform: Transform::from_translation(Vec3::new(0.0, target_size.y / 4.0, 0.5)),
         visible: Visible { is_visible: false, ..Default::default() },
         ..Default::default()
-    }).with(TargetHighlight::Top);
+    }).insert(TargetHighlight::Top);
 }
 
 fn main() {
@@ -78,14 +72,13 @@ fn main() {
 
 /// This system prints out all mouse events as they come in
 fn mouse(
-    mut state: Local<State>,
-    cursor_moved_events: Res<Events<CursorMoved>>,
+    mut cursor_moved_events: EventReader<CursorMoved>,
     windows: Res<Windows>,
-    query: Query<(&Transform, &Sprite), With<Target>>,
+    query: Query<(&Transform, &Sprite), (With<Target>, Without<Cursor>)>,
     mut cursor_query: Query<(&mut Transform, &Sprite), With<Cursor>>,
     mut highlight_query: Query<(&TargetHighlight, &mut Visible)>,
 ) {
-    for event in state.cursor_moved_event_reader.iter(&cursor_moved_events) {
+    for event in cursor_moved_events.iter() {
         let window = windows.get(event.id).unwrap();
         let window_size = Vec2::new(window.width() as f32, window.height() as f32);
         let pos = event.position - window_size / 2.0;
@@ -107,6 +100,7 @@ fn mouse(
                         (Some(Collision::Right), TargetHighlight::Right) => visible.is_visible = true,
                         (Some(Collision::Bottom), TargetHighlight::Bottom) => visible.is_visible = true,
                         (Some(Collision::Top), TargetHighlight::Top) => visible.is_visible = true,
+                        (Some(Collision::Intersecting), _) => visible.is_visible = true,
                         _ => {}
                     }
                 }
